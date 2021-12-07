@@ -4,21 +4,57 @@ using namespace cv;
 using namespace std;
 
 // プロトタイプ宣言
-void extract_gray_block(Mat image);
+Mat extract_gray_block(Mat image);
 
 int main()
 {
 	clock_t start = clock();
 
-	Mat image =imread("img.jpg"); //ファイル読み込み
-	if (image.empty()) {  //Matオブジェクトが空のとき
+	Mat image01 =imread("img-01.jpg"); //ファイル読み込み
+	if (image01.empty()) {  //Matオブジェクトが空のとき
 		cout << "ファイルが読み込めません";
 		cin.get();
 		return -1;
 	}
-	imshow("カラー画像", image);
+	imshow("カラー画像1", image01);
 	
-	extract_gray_block(image);
+	Mat image02 = imread("img-08.jpg"); //ファイル読み込み
+	if (image02.empty()) {  //Matオブジェクトが空のとき
+		cout << "ファイルが読み込めません";
+		cin.get();
+		return -1;
+	}
+	imshow("カラー画像2", image02);
+	
+	// グレーブロック特徴の抽出
+	Mat image01_gray = extract_gray_block(image01);
+	Mat image02_gray = extract_gray_block(image02);
+
+	imshow("グレーブロック画像1", image01_gray);
+	imshow("グレーブロック画像2", image02_gray);
+
+	// グレーブロック特徴の値の違うピクセルをカウント
+	int color_threshold = 2;
+	int count_diff = 0; 
+	int count_threshold = 5;
+
+	for (int y = 0; y < image01_gray.rows; y++) {
+		for (int x = 0; x < image01_gray.cols; x++) {
+			if ((image01_gray.at<unsigned char>(y, x) < image02_gray.at<unsigned char>(y, x) - color_threshold ) || (image02_gray.at<unsigned char>(y, x) + color_threshold < image01_gray.at<unsigned char>(y, x))) {
+				cout << "image01: " << +image01_gray.at<unsigned char>(y, x);
+				cout << ", image02: " << +image02_gray.at<unsigned char>(y, x) << endl;
+				count_diff++;
+			}
+		}
+
+	}
+
+	if (count_diff >= count_threshold) {
+		cout << count_diff << "個ピクセルが違うため，重複画像ではありません．" << endl;
+	}
+	else {
+		cout << count_diff << "個ピクセルが違うため，重複画像です．" << endl;
+	}
 
 	clock_t end = clock();
 
@@ -30,10 +66,12 @@ int main()
 	return 0;
 }
 
-void extract_gray_block(Mat image) {
+Mat extract_gray_block(Mat image) {
 	Mat gray;
 	cvtColor(image, gray, COLOR_BGR2GRAY);  //グレースケールに変換
-	imshow("グレースケール画像", gray);
+	
+	// TODO: ファイル名を受け取って複数のグレースケール画像を表示できるようにする
+	// imshow("グレースケール画像", gray);
 
 	// gray block featureを抽出する
 	int n = 100; // 画像をn * nのブロックに分割する
@@ -58,5 +96,5 @@ void extract_gray_block(Mat image) {
 		}
 	}
 
-	imshow("グレーブロック画像", gray_block);
+	return gray_block;
 }
