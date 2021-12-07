@@ -5,6 +5,7 @@ using namespace std;
 
 // プロトタイプ宣言
 Mat extract_gray_block(Mat image);
+void count_diff(Mat image01_gray, Mat image02_gray);
 
 int main()
 {
@@ -33,28 +34,8 @@ int main()
 	imshow("グレーブロック画像1", image01_gray);
 	imshow("グレーブロック画像2", image02_gray);
 
-	// グレーブロック特徴の値の違うピクセルをカウント
-	int color_threshold = 2;
-	int count_diff = 0; 
-	int count_threshold = 5;
-
-	for (int y = 0; y < image01_gray.rows; y++) {
-		for (int x = 0; x < image01_gray.cols; x++) {
-			if ((image01_gray.at<unsigned char>(y, x) < image02_gray.at<unsigned char>(y, x) - color_threshold ) || (image02_gray.at<unsigned char>(y, x) + color_threshold < image01_gray.at<unsigned char>(y, x))) {
-				cout << "image01: " << +image01_gray.at<unsigned char>(y, x);
-				cout << ", image02: " << +image02_gray.at<unsigned char>(y, x) << endl;
-				count_diff++;
-			}
-		}
-
-	}
-
-	if (count_diff >= count_threshold) {
-		cout << count_diff << "個ピクセルが違うため，重複画像ではありません．" << endl;
-	}
-	else {
-		cout << count_diff << "個ピクセルが違うため，重複画像です．" << endl;
-	}
+	// グレーブロックの差をカウント
+	count_diff(image01_gray, image02_gray);
 
 	clock_t end = clock();
 
@@ -97,4 +78,29 @@ Mat extract_gray_block(Mat image) {
 	}
 
 	return gray_block;
+}
+
+void count_diff(Mat image01_gray, Mat image02_gray) {
+	// グレーブロック特徴の値の違うピクセルをカウント
+	int color_threshold = 2;
+	int count_diff = 0;
+	int count_threshold = 5;
+
+	for (int y = 0; y < image01_gray.rows; y++) {
+		for (int x = 0; x < image01_gray.cols; x++) {
+			if ((image01_gray.at<unsigned char>(y, x) < image02_gray.at<unsigned char>(y, x) - color_threshold) || (image02_gray.at<unsigned char>(y, x) + color_threshold < image01_gray.at<unsigned char>(y, x))) {
+				cout << "image01: " << +image01_gray.at<unsigned char>(y, x);
+				cout << ", image02: " << +image02_gray.at<unsigned char>(y, x) << endl;
+				count_diff++;
+			}
+		}
+
+	}
+
+	if (count_diff >= count_threshold) {
+		cout << count_diff << "個ピクセルが違うため，重複画像ではありません．" << endl;
+	}
+	else {
+		cout << count_diff << "個ピクセルが違うため，重複画像です．" << endl;
+	}
 }
