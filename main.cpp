@@ -1,45 +1,45 @@
-#include <opencv2/opencv.hpp>
+ï»¿#include <opencv2/opencv.hpp>
 #include <time.h>
 using namespace cv;
 using namespace std;
 
-// ƒvƒƒgƒ^ƒCƒvéŒ¾
+// ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€
 Mat extract_gray_block(Mat image, int size);
 void count_diff(Mat image01_gray, Mat image02_gray);
 void change_n_value(int size, void* userdata);
 
-// ƒOƒ[ƒoƒ‹•Ï”
-Mat image01 = imread("img-01.jpg"); //ƒtƒ@ƒCƒ‹“Ç‚İ‚İ
+// ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°
+Mat image01 = imread("img-01.jpg"); //ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿
 
 int main()
 {
 	clock_t start = clock();
 	int n = 100;
 
-	if (image01.empty()) {  //MatƒIƒuƒWƒFƒNƒg‚ª‹ó‚Ì‚Æ‚«
-		cout << "ƒtƒ@ƒCƒ‹‚ª“Ç‚İ‚ß‚Ü‚¹‚ñ";
+	if (image01.empty()) {  //Matã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒç©ºã®ã¨ã
+		cout << "ãƒ•ã‚¡ã‚¤ãƒ«ãŒèª­ã¿è¾¼ã‚ã¾ã›ã‚“";
 		cin.get();
 		return -1;
 	}
-	imshow("ƒJƒ‰[‰æ‘œ1", image01);
+	imshow("ã‚«ãƒ©ãƒ¼ç”»åƒ1", image01);
 	
-	Mat image02 = imread("img-05.jpg"); //ƒtƒ@ƒCƒ‹“Ç‚İ‚İ
-	if (image02.empty()) {  //MatƒIƒuƒWƒFƒNƒg‚ª‹ó‚Ì‚Æ‚«
-		cout << "ƒtƒ@ƒCƒ‹‚ª“Ç‚İ‚ß‚Ü‚¹‚ñ";
+	Mat image02 = imread("img-05.jpg"); //ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿
+	if (image02.empty()) {  //Matã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒç©ºã®ã¨ã
+		cout << "ãƒ•ã‚¡ã‚¤ãƒ«ãŒèª­ã¿è¾¼ã‚ã¾ã›ã‚“";
 		cin.get();
 		return -1;
 	}
-	imshow("ƒJƒ‰[‰æ‘œ2", image02);
+	imshow("ã‚«ãƒ©ãƒ¼ç”»åƒ2", image02);
 	
-	// ƒOƒŒ[ƒuƒƒbƒN“Á’¥‚Ì’Šo
+	// ã‚°ãƒ¬ãƒ¼ãƒ–ãƒ­ãƒƒã‚¯ç‰¹å¾´ã®æŠ½å‡º
 	Mat image01_gray = extract_gray_block(image01, 100);
 	Mat image02_gray = extract_gray_block(image02, 100);
 
-	imshow("ƒOƒŒ[ƒuƒƒbƒN‰æ‘œ1", image01_gray);
-	imshow("ƒOƒŒ[ƒuƒƒbƒN‰æ‘œ2", image02_gray);
+	imshow("ã‚°ãƒ¬ãƒ¼ãƒ–ãƒ­ãƒƒã‚¯ç”»åƒ1", image01_gray);
+	imshow("ã‚°ãƒ¬ãƒ¼ãƒ–ãƒ­ãƒƒã‚¯ç”»åƒ2", image02_gray);
 
 	int max_n = 0;
-	// ‰æ‘œ‚Ìc‰¡‚Ì’·‚³‚Ì‚¤‚¿A’Z‚¢‚Ù‚¤‚ğ n ‚ÌÅ‘å’l‚Æ‚·‚é
+	// ç”»åƒã®ç¸¦æ¨ªã®é•·ã•ã®ã†ã¡ã€çŸ­ã„ã»ã†ã‚’ n ã®æœ€å¤§å€¤ã¨ã™ã‚‹
 	if (image01.rows < image01.cols) {
 		max_n = image01.rows;
 	}
@@ -52,10 +52,10 @@ int main()
 	setTrackbarPos("Divison n", "gray block image 1", n);
 
 
-	// ƒOƒŒ[ƒuƒƒbƒN‚Ì·‚ğƒJƒEƒ“ƒg
+	// ã‚°ãƒ¬ãƒ¼ãƒ–ãƒ­ãƒƒã‚¯ã®å·®ã‚’ã‚«ã‚¦ãƒ³ãƒˆ
 	count_diff(image01_gray, image02_gray);
 
-	// Às‚É‚©‚©‚Á‚½ŠÔ‚ğZo
+	// å®Ÿè¡Œã«ã‹ã‹ã£ãŸæ™‚é–“ã‚’ç®—å‡º
 	clock_t end = clock();
 	const double time = static_cast<double> (end - start) / CLOCKS_PER_SEC * 1.0;
 	cout << "time: " << time << "[sec]" << endl;
@@ -66,15 +66,15 @@ int main()
 }
 
 Mat extract_gray_block(Mat image, int size) {
-	// TODO: ‚È‚ñ‚©c‚Æ‰¡‚ÌŠÖŒW‚ª‚¤‚Ü‚­‚¢‚Á‚Ä‚È‚¢‚İ‚½‚¢‚È‚Ì‚ÅC³‚·‚é
+	// TODO: ãªã‚“ã‹ç¸¦ã¨æ¨ªã®é–¢ä¿‚ãŒã†ã¾ãã„ã£ã¦ãªã„ã¿ãŸã„ãªã®ã§ä¿®æ­£ã™ã‚‹
 
 	Mat gray;
-	cvtColor(image, gray, COLOR_BGR2GRAY);  //ƒOƒŒ[ƒXƒP[ƒ‹‚É•ÏŠ·
+	cvtColor(image, gray, COLOR_BGR2GRAY);  //ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ã«å¤‰æ›
 	
-	// TODO: ƒtƒ@ƒCƒ‹–¼‚ğó‚¯æ‚Á‚Ä•¡”‚ÌƒOƒŒ[ƒXƒP[ƒ‹‰æ‘œ‚ğ•\¦‚Å‚«‚é‚æ‚¤‚É‚·‚é
-	// imshow("ƒOƒŒ[ƒXƒP[ƒ‹‰æ‘œ", gray);
+	// TODO: ãƒ•ã‚¡ã‚¤ãƒ«åã‚’å—ã‘å–ã£ã¦è¤‡æ•°ã®ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ç”»åƒã‚’è¡¨ç¤ºã§ãã‚‹ã‚ˆã†ã«ã™ã‚‹
+	// imshow("ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ç”»åƒ", gray);
 
-	// gray block feature‚ğ’Šo‚·‚é
+	// gray block featureã‚’æŠ½å‡ºã™ã‚‹
 	Mat gray_block = Mat::zeros(size, size, CV_8U);
 	Mat gray_block_sum = Mat::zeros(size, size, CV_32S);
 	Mat gray_block_count = Mat::zeros(size, size, CV_32S);
@@ -118,7 +118,7 @@ Mat extract_gray_block(Mat image, int size) {
 }
 
 void count_diff(Mat image01_gray, Mat image02_gray) {
-	// ƒOƒŒ[ƒuƒƒbƒN“Á’¥‚Ì’l‚Ìˆá‚¤ƒsƒNƒZƒ‹‚ğƒJƒEƒ“ƒg
+	// ã‚°ãƒ¬ãƒ¼ãƒ–ãƒ­ãƒƒã‚¯ç‰¹å¾´ã®å€¤ã®é•ã†ãƒ”ã‚¯ã‚»ãƒ«ã‚’ã‚«ã‚¦ãƒ³ãƒˆ
 	int color_threshold = 2;
 	int count_diff = 0;
 	int count_threshold = 5;
@@ -135,15 +135,15 @@ void count_diff(Mat image01_gray, Mat image02_gray) {
 	}
 
 	if (count_diff >= count_threshold) {
-		cout << count_diff << "ŒÂƒsƒNƒZƒ‹‚ªˆá‚¤‚½‚ßCd•¡‰æ‘œ‚Å‚Í‚ ‚è‚Ü‚¹‚ñD" << endl;
+		cout << count_diff << "å€‹ãƒ”ã‚¯ã‚»ãƒ«ãŒé•ã†ãŸã‚ï¼Œé‡è¤‡ç”»åƒã§ã¯ã‚ã‚Šã¾ã›ã‚“ï¼" << endl;
 	}
 	else {
-		cout << count_diff << "ŒÂƒsƒNƒZƒ‹‚ªˆá‚¤‚½‚ßCd•¡‰æ‘œ‚Å‚·D" << endl;
+		cout << count_diff << "å€‹ãƒ”ã‚¯ã‚»ãƒ«ãŒé•ã†ãŸã‚ï¼Œé‡è¤‡ç”»åƒã§ã™ï¼" << endl;
 	}
 }
 
 void change_n_value(int size, void* userdata) {
-	cout << "Œ»İ‚Ìn: " << size << endl;
+	cout << "ç¾åœ¨ã®n: " << size << endl;
 
 	Mat image01_gray;
 
