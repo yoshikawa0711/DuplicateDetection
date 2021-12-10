@@ -14,6 +14,7 @@ Mat image01 = imread("img-01.jpg"); //ファイル読み込み
 int main()
 {
 	clock_t start = clock();
+	int n = 100;
 
 	if (image01.empty()) {  //Matオブジェクトが空のとき
 		cout << "ファイルが読み込めません";
@@ -22,7 +23,7 @@ int main()
 	}
 	imshow("カラー画像1", image01);
 	
-	Mat image02 = imread("img-08.jpg"); //ファイル読み込み
+	Mat image02 = imread("img-05.jpg"); //ファイル読み込み
 	if (image02.empty()) {  //Matオブジェクトが空のとき
 		cout << "ファイルが読み込めません";
 		cin.get();
@@ -31,11 +32,11 @@ int main()
 	imshow("カラー画像2", image02);
 	
 	// グレーブロック特徴の抽出
-	// Mat image01_gray = extract_gray_block(image01);
-	// Mat image02_gray = extract_gray_block(image02);
+	Mat image01_gray = extract_gray_block(image01, 100);
+	Mat image02_gray = extract_gray_block(image02, 100);
 
-	// imshow("グレーブロック画像1", image01_gray);
-	// imshow("グレーブロック画像2", image02_gray);
+	imshow("グレーブロック画像1", image01_gray);
+	imshow("グレーブロック画像2", image02_gray);
 
 	int max_n = 0;
 	// 画像の縦横の長さのうち、短いほうを n の最大値とする
@@ -48,11 +49,11 @@ int main()
 
 	namedWindow("gray block image 1", WINDOW_NORMAL);
 	createTrackbar("Divison n", "gray block image 1", NULL, max_n, change_n_value);
-	setTrackbarPos("Divison n", "gray block image 1", 100);
+	setTrackbarPos("Divison n", "gray block image 1", n);
 
 
 	// グレーブロックの差をカウント
-	// count_diff(image01_gray, image02_gray);
+	count_diff(image01_gray, image02_gray);
 
 	// 実行にかかった時間を算出
 	clock_t end = clock();
@@ -75,15 +76,28 @@ Mat extract_gray_block(Mat image, int size) {
 
 	// gray block featureを抽出する
 	Mat gray_block = Mat::zeros(size, size, CV_8U);
-	Mat gray_block_sum = Mat::zeros(size, size, CV_64FC1);
+	Mat gray_block_sum = Mat::zeros(size, size, CV_32S);
+	Mat gray_block_count = Mat::zeros(size, size, CV_32S);
 
-	int gray_block_rows_length = gray.rows / size;
-	int gray_block_cols_length = gray.cols / size;
+	double gray_block_rows_length = 1.0 * gray.rows / size;
+	double gray_block_cols_length = 1.0 * gray.cols / size;
 
 	for (int y = 0; y < gray.rows; y++) {
 		for (int x = 0; x < gray.cols; x++) {
 			if (y < gray_block_rows_length * size && x < gray_block_cols_length * size) {
-				gray_block_sum.at<double>(y / gray_block_rows_length, x / gray_block_cols_length) += +gray.at<unsigned char>(y, x);
+				if ((int)round(y / gray_block_rows_length) < size && (int)round(x / gray_block_cols_length) < size) {
+					gray_block_sum.at<int>((int)round(y / gray_block_rows_length), (int)round(x / gray_block_cols_length)) += +gray.at<unsigned char>(y, x);
+					gray_block_count.at<int>((int)round(y / gray_block_rows_length), (int)round(x / gray_block_cols_length)) += 1;
+				} 
+				else if ((int)round(y / gray_block_rows_length) < size) {
+					gray_block_sum.at<int>((int)round(y / gray_block_rows_length), size - 1) += +gray.at<unsigned char>(y, x);
+					gray_block_count.at<int>((int)round(y / gray_block_rows_length), size - 1) += 1;
+				}
+				else if ((int)round(x / gray_block_cols_length) < size) {
+					gray_block_sum.at<int>(size - 1, (int)round(x / gray_block_cols_length)) += +gray.at<unsigned char>(y, x);
+					gray_block_count.at<int>(size - 1, (int)round(x / gray_block_cols_length)) += 1;
+				}
+
 			}
 		}
 
@@ -91,7 +105,12 @@ Mat extract_gray_block(Mat image, int size) {
 
 	for (int y = 0; y < size; y++) {
 		for (int x = 0; x < size; x++) {
-			gray_block.at<unsigned char>(y, x) = gray_block_sum.at<double>(y, x) / (gray_block_rows_length * gray_block_cols_length);
+			if (gray_block_count.at<int>(y, x) == 0) {
+				cout << "x: " << x << ", y: " << y << endl;
+			}
+			else {
+				gray_block.at<unsigned char>(y, x) = gray_block_sum.at<int>(y, x) / gray_block_count.at<int>(y, x);
+			}
 		}
 	}
 
