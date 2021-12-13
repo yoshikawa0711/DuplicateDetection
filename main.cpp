@@ -4,12 +4,18 @@ using namespace cv;
 using namespace std;
 
 // プロトタイプ宣言
+// 重複除去にかかわる関数
 Mat extract_gray_block(Mat image, int size);
 void show_two_images(Mat image01, Mat image02);
 void count_diff(Mat image01_gray, Mat image02_gray, int color, int count);
+
+// トラックバーの値に応じて処理をし直すための関数
 void change_n_value(int size, void* userdata);
 void change_color_value(int color, void* userdata);
 void change_count_value(int count, void* userdata);
+
+// その他の計算に必要な関数
+int min_two_images_edgs(Mat image01, Mat image02);
 
 // グローバル変数
 Mat image01 = imread("img-01.jpg"); //ファイル読み込み
@@ -36,27 +42,21 @@ int main()
 	}
 	imshow("カラー画像2", image02);
 
-	// TODO: 二つの画像の縦横の長さのうち、最大値を持ってくるように修正する
-	int n = 100;
-	int max_n = 0;
+	int divison_n = 100;
 	// 画像の縦横の長さのうち、短いほうを n の最大値とする
-	if (image01.rows < image01.cols) {
-		max_n = image01.rows;
-	}
-	else {
-		max_n = image01.cols;
-	}
+	int max_n = min_two_images_edgs(image01, image02);
+	
 
 	namedWindow("gray block images", WINDOW_NORMAL);
 	createTrackbar("Divison n", "gray block images", NULL, max_n, change_n_value);
-	setTrackbarPos("Divison n", "gray block images", n);
+	setTrackbarPos("Divison n", "gray block images", divison_n);
 	
 	int color = 2;
 	createTrackbar("Allowable Error color", "gray block images", NULL, 255, change_color_value);
 	setTrackbarPos("Allowable Error color", "gray block images", color);
 	
 	int count = 5;
-	createTrackbar("Allowable Error count", "gray block images", NULL, n * n, change_count_value);
+	createTrackbar("Allowable Error count", "gray block images", NULL, divison_n * divison_n, change_count_value);
 	setTrackbarPos("Allowable Error count", "gray block images", count);
 
 
@@ -191,4 +191,13 @@ void change_count_value(int count, void* userdata) {
 	cout << "現在のピクセル数の許容誤差: " << count << endl;
 
 	count_diff(image01_gray, image02_gray, -1, count);
+}
+
+int min_two_images_edgs(Mat image01, Mat image02) {
+
+	int image01_min_edge = min(image01.cols, image01.rows);
+	int image02_min_edge = min(image02.cols, image02.rows);
+	int min_edge = min(image01_min_edge, image02_min_edge);
+
+	return min_edge;
 }
