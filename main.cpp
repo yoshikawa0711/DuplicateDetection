@@ -5,16 +5,22 @@ using namespace std;
 
 // プロトタイプ宣言
 Mat extract_gray_block(Mat image, int size);
-void count_diff(Mat image01_gray, Mat image02_gray);
+void show_two_images(Mat image01, Mat image02);
+void count_diff(Mat image01_gray, Mat image02_gray, int color, int count);
 void change_n_value(int size, void* userdata);
+void change_color_value(int color, void* userdata);
+void change_count_value(int count, void* userdata);
 
 // グローバル変数
 Mat image01 = imread("img-01.jpg"); //ファイル読み込み
+Mat image01_gray;
+
+Mat image02 = imread("img-06.jpg"); //ファイル読み込み
+Mat image02_gray;
 
 int main()
 {
 	clock_t start = clock();
-	int n = 100;
 
 	if (image01.empty()) {  //Matオブジェクトが空のとき
 		cout << "ファイルが読み込めません";
@@ -23,21 +29,15 @@ int main()
 	}
 	imshow("カラー画像1", image01);
 	
-	Mat image02 = imread("img-05.jpg"); //ファイル読み込み
 	if (image02.empty()) {  //Matオブジェクトが空のとき
 		cout << "ファイルが読み込めません";
 		cin.get();
 		return -1;
 	}
 	imshow("カラー画像2", image02);
-	
-	// グレーブロック特徴の抽出
-	Mat image01_gray = extract_gray_block(image01, 100);
-	Mat image02_gray = extract_gray_block(image02, 100);
 
-	imshow("グレーブロック画像1", image01_gray);
-	imshow("グレーブロック画像2", image02_gray);
-
+	// TODO: 二つの画像の縦横の長さのうち、最大値を持ってくるように修正する
+	int n = 100;
 	int max_n = 0;
 	// 画像の縦横の長さのうち、短いほうを n の最大値とする
 	if (image01.rows < image01.cols) {
@@ -47,13 +47,18 @@ int main()
 		max_n = image01.cols;
 	}
 
-	namedWindow("gray block image 1", WINDOW_NORMAL);
-	createTrackbar("Divison n", "gray block image 1", NULL, max_n, change_n_value);
-	setTrackbarPos("Divison n", "gray block image 1", n);
+	namedWindow("gray block images", WINDOW_NORMAL);
+	createTrackbar("Divison n", "gray block images", NULL, max_n, change_n_value);
+	setTrackbarPos("Divison n", "gray block images", n);
+	
+	int color = 2;
+	createTrackbar("Allowable Error color", "gray block images", NULL, 255, change_color_value);
+	setTrackbarPos("Allowable Error color", "gray block images", color);
+	
+	int count = 5;
+	createTrackbar("Allowable Error count", "gray block images", NULL, n * n, change_count_value);
+	setTrackbarPos("Allowable Error count", "gray block images", count);
 
-
-	// グレーブロックの差をカウント
-	count_diff(image01_gray, image02_gray);
 
 	// 実行にかかった時間を算出
 	clock_t end = clock();
@@ -66,7 +71,6 @@ int main()
 }
 
 Mat extract_gray_block(Mat image, int size) {
-	// TODO: なんか縦と横の関係がうまくいってないみたいなので修正する
 
 	Mat gray;
 	cvtColor(image, gray, COLOR_BGR2GRAY);  //グレースケールに変換
@@ -105,10 +109,7 @@ Mat extract_gray_block(Mat image, int size) {
 
 	for (int y = 0; y < size; y++) {
 		for (int x = 0; x < size; x++) {
-			if (gray_block_count.at<int>(y, x) == 0) {
-				cout << "x: " << x << ", y: " << y << endl;
-			}
-			else {
+			if (gray_block_count.at<int>(y, x) != 0) {
 				gray_block.at<unsigned char>(y, x) = gray_block_sum.at<int>(y, x) / gray_block_count.at<int>(y, x);
 			}
 		}
@@ -117,17 +118,37 @@ Mat extract_gray_block(Mat image, int size) {
 	return gray_block;
 }
 
-void count_diff(Mat image01_gray, Mat image02_gray) {
+void show_two_images(Mat image_left, Mat image_right) {
+	Mat base(max(image_left.rows, image_right.rows), image_left.cols + image_right.cols, CV_8U);
+	Mat roi_left(base, Rect(0, 0, image_left.cols, image_left.rows));
+	image_left.copyTo(roi_left);
+
+	Mat roi_right(base, Rect(image_left.cols, 0, image_right.cols, image_right.rows));
+	image_right.copyTo(roi_right);
+
+	imshow("gray block images", base);
+
+}
+
+void count_diff(Mat image01_gray, Mat image02_gray, int color, int count) {
 	// グレーブロック特徴の値の違うピクセルをカウント
-	int color_threshold = 2;
 	int count_diff = 0;
-	int count_threshold = 5;
+
+	// 閾値の設定（省略可能なので、引数の値がマイナスでなければ代入する）
+	static int color_threshold = 2;
+	if (color >= 0) {
+		color_threshold = color;
+	}
+
+	static int count_threshold = 5;
+	if (count >= 0) {
+		count_threshold = count;
+	}
 
 	for (int y = 0; y < image01_gray.rows; y++) {
 		for (int x = 0; x < image01_gray.cols; x++) {
-			if ((image01_gray.at<unsigned char>(y, x) < image02_gray.at<unsigned char>(y, x) - color_threshold) || (image02_gray.at<unsigned char>(y, x) + color_threshold < image01_gray.at<unsigned char>(y, x))) {
-				cout << "image01: " << +image01_gray.at<unsigned char>(y, x);
-				cout << ", image02: " << +image02_gray.at<unsigned char>(y, x) << endl;
+			if ((image01_gray.at<unsigned char>(y, x) < image02_gray.at<unsigned char>(y, x) - color_threshold) ||
+				(image02_gray.at<unsigned char>(y, x) + color_threshold < image01_gray.at<unsigned char>(y, x))) {
 				count_diff++;
 			}
 		}
@@ -138,21 +159,36 @@ void count_diff(Mat image01_gray, Mat image02_gray) {
 		cout << count_diff << "個ピクセルが違うため，重複画像ではありません．" << endl;
 	}
 	else {
-		cout << count_diff << "個ピクセルが違うため，重複画像です．" << endl;
+		cout << count_diff << "個ピクセルが違いますが，許容誤差以内なので，重複画像です．" << endl;
 	}
 }
 
 void change_n_value(int size, void* userdata) {
 	cout << "現在のn: " << size << endl;
 
-	Mat image01_gray;
-
 	if (size > 0) {
 		image01_gray = extract_gray_block(image01, size);
+		image02_gray = extract_gray_block(image02, size);
 	}
 	else {
 		image01_gray = extract_gray_block(image01, 1);
+		image02_gray = extract_gray_block(image02, 1);
 	}
 
-	imshow("gray block image 1", image01_gray);
+	count_diff(image01_gray, image02_gray, -1, -1);
+
+	show_two_images(image01_gray, image02_gray);
+}
+
+void change_color_value(int color, void* userdata) {
+	cout << "現在の色の許容誤差: " << color << endl;
+
+	count_diff(image01_gray, image02_gray, color, -1);
+
+}
+
+void change_count_value(int count, void* userdata) {
+	cout << "現在のピクセル数の許容誤差: " << count << endl;
+
+	count_diff(image01_gray, image02_gray, -1, count);
 }
