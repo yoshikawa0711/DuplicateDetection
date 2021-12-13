@@ -18,10 +18,10 @@ void change_count_value(int count, void* userdata);
 int min_two_images_edgs(Mat image01, Mat image02);
 
 // グローバル変数
-Mat image01 = imread("img-01.jpg"); //ファイル読み込み
+Mat image01 = imread("img/img-01.jpg"); //ファイル読み込み
 Mat image01_gray;
 
-Mat image02 = imread("img-06.jpg"); //ファイル読み込み
+Mat image02 = imread("img/img-06.jpg"); //ファイル読み込み
 Mat image02_gray;
 
 int main()
