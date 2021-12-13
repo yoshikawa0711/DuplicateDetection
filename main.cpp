@@ -21,7 +21,7 @@ int min_two_images_edgs(Mat image01, Mat image02);
 Mat image01 = imread("img/img-01.jpg"); //ファイル読み込み
 Mat image01_gray;
 
-Mat image02 = imread("img/img-06.jpg"); //ファイル読み込み
+Mat image02 = imread("img/img-09.jpg"); //ファイル読み込み
 Mat image02_gray;
 
 int main()
@@ -42,21 +42,21 @@ int main()
 	}
 	imshow("カラー画像2", image02);
 
-	int divison_n = 100;
+	int division_n = 50;
 	// 画像の縦横の長さのうち、短いほうを n の最大値とする
 	int max_n = min_two_images_edgs(image01, image02);
 	
 
 	namedWindow("gray block images", WINDOW_NORMAL);
 	createTrackbar("Divison n", "gray block images", NULL, max_n, change_n_value);
-	setTrackbarPos("Divison n", "gray block images", divison_n);
+	setTrackbarPos("Divison n", "gray block images", division_n);
 	
-	int color = 2;
+	int color = 16;
 	createTrackbar("Allowable Error color", "gray block images", NULL, 255, change_color_value);
 	setTrackbarPos("Allowable Error color", "gray block images", color);
 	
-	int count = 5;
-	createTrackbar("Allowable Error count", "gray block images", NULL, divison_n * divison_n, change_count_value);
+	int count = division_n * division_n * 0.01;
+	createTrackbar("Allowable Error count", "gray block images", NULL, division_n * division_n, change_count_value);
 	setTrackbarPos("Allowable Error count", "gray block images", count);
 
 
@@ -155,7 +155,7 @@ void count_diff(Mat image01_gray, Mat image02_gray, int color, int count) {
 
 	}
 
-	if (count_diff >= count_threshold) {
+	if (count_diff > count_threshold) {
 		cout << count_diff << "個ピクセルが違うため，重複画像ではありません．" << endl;
 	}
 	else {
