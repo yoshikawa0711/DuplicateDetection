@@ -5,18 +5,18 @@ using namespace std;
 
 // プロトタイプ宣言
 // 重複除去にかかわる関数
-Mat extract_gray_block(Mat image, int size);
-void show_two_images(Mat image01, Mat image02);
-int count_diff_pixels(Mat image01_gray, Mat image02_gray, int new_color_threshold);
-bool is_duplicate_image(int count_diff_pixels, int new_count_threshold);
+Mat extractGrayBlock(Mat image, int size);
+void showTwoImages(Mat image01, Mat image02);
+int countDiffPixels(Mat image01_gray, Mat image02_gray, int new_color_threshold);
+bool isDuplicateImage(int count_diff_pixels, int new_count_threshold);
 
 // トラックバーの値に応じて処理をし直すための関数
-void change_n_value(int size, void* userdata);
-void change_color_value(int color, void* userdata);
-void change_count_value(int count, void* userdata);
+void changeNValue(int size, void* userdata);
+void changeColorValue(int color, void* userdata);
+void changeCountValue(int count, void* userdata);
 
 // その他の計算に必要な関数
-int min_two_images_edgs(Mat image01, Mat image02);
+int minTwoImagesEdgs(Mat image01, Mat image02);
 
 // グローバル変数
 Mat image01 = imread("img/img-01.jpg"); //ファイル読み込み
@@ -45,19 +45,19 @@ int main()
 
 	int division_n = 50;
 	// 画像の縦横の長さのうち、短いほうを n の最大値とする
-	int max_n = min_two_images_edgs(image01, image02);
+	int max_n = minTwoImagesEdgs(image01, image02);
 	
 
 	namedWindow("gray block images", WINDOW_NORMAL);
-	createTrackbar("Divison n", "gray block images", NULL, max_n, change_n_value);
+	createTrackbar("Divison n", "gray block images", NULL, max_n, changeNValue);
 	setTrackbarPos("Divison n", "gray block images", division_n);
 	
 	int color = 16;
-	createTrackbar("Allowable Error color", "gray block images", NULL, 255, change_color_value);
+	createTrackbar("Allowable Error color", "gray block images", NULL, 255, changeColorValue);
 	setTrackbarPos("Allowable Error color", "gray block images", color);
 	
 	int count = division_n * division_n * 0.01;
-	createTrackbar("Allowable Error count", "gray block images", NULL, division_n * division_n, change_count_value);
+	createTrackbar("Allowable Error count", "gray block images", NULL, division_n * division_n, changeCountValue);
 	setTrackbarPos("Allowable Error count", "gray block images", count);
 
 
@@ -71,7 +71,7 @@ int main()
 	return 0;
 }
 
-Mat extract_gray_block(Mat image, int size) {
+Mat extractGrayBlock(Mat image, int size) {
 
 	Mat gray;
 	cvtColor(image, gray, COLOR_BGR2GRAY);  //グレースケールに変換
@@ -119,7 +119,7 @@ Mat extract_gray_block(Mat image, int size) {
 	return gray_block;
 }
 
-void show_two_images(Mat image_left, Mat image_right) {
+void showTwoImages(Mat image_left, Mat image_right) {
 	Mat base(max(image_left.rows, image_right.rows), image_left.cols + image_right.cols, CV_8U);
 	Mat roi_left(base, Rect(0, 0, image_left.cols, image_left.rows));
 	image_left.copyTo(roi_left);
@@ -131,7 +131,7 @@ void show_two_images(Mat image_left, Mat image_right) {
 
 }
 
-int count_diff_pixels(Mat image01_gray, Mat image02_gray, int new_color_threshold) {
+int countDiffPixels(Mat image01_gray, Mat image02_gray, int new_color_threshold) {
 	// グレーブロック特徴の値の違うピクセルをカウント
 	int count_diff = 0;
 
@@ -155,7 +155,7 @@ int count_diff_pixels(Mat image01_gray, Mat image02_gray, int new_color_threshol
 
 }
 
-bool is_duplicate_image(int count_diff_pixels, int new_count_threshold) {
+bool isDuplicateImage(int count_diff_pixels, int new_count_threshold) {
 
 	static int count_threshold = 5;
 	if (new_count_threshold >= 0) {
@@ -176,39 +176,40 @@ bool is_duplicate_image(int count_diff_pixels, int new_count_threshold) {
 	return ans;
 }
 
-void change_n_value(int size, void* userdata) {
+void changeNValue(int size, void* userdata) {
 	cout << "現在のn: " << size << endl;
 
 	if (size > 0) {
-		image01_gray = extract_gray_block(image01, size);
-		image02_gray = extract_gray_block(image02, size);
+		image01_gray = extractGrayBlock(image01, size);
+		image02_gray = extractGrayBlock(image02, size);
 	}
 	else {
-		image01_gray = extract_gray_block(image01, 1);
-		image02_gray = extract_gray_block(image02, 1);
+		image01_gray = extractGrayBlock(image01, 1);
+		image02_gray = extractGrayBlock(image02, 1);
 	}
 
-	int count_diff = count_diff_pixels(image01_gray, image02_gray, -1);
-	is_duplicate_image(count_diff, -1);
+	int count_diff = countDiffPixels(image01_gray, image02_gray, -1);
+	isDuplicateImage(count_diff, -1);
 
-	show_two_images(image01_gray, image02_gray);
+	showTwoImages(image01_gray, image02_gray);
 }
 
-void change_color_value(int color, void* userdata) {
+void changeColorValue(int color, void* userdata) {
 	cout << "現在の色の許容誤差: " << color << endl;
 
-	int count_diff = count_diff_pixels(image01_gray, image02_gray, color);
-	is_duplicate_image(count_diff, -1);
+	int count_diff = countDiffPixels(image01_gray, image02_gray, color);
+	isDuplicateImage(count_diff, -1);
 }
 
-void change_count_value(int count, void* userdata) {
+void changeCountValue(int count, void* userdata) {
 	cout << "現在のピクセル数の許容誤差: " << count << endl;
 
-	int count_diff = count_diff_pixels(image01_gray, image02_gray, -1);
-	is_duplicate_image(count_diff, count);
+	// TODO: count_diffを計算しなくても良いような実装にする
+	int count_diff = countDiffPixels(image01_gray, image02_gray, -1);
+	isDuplicateImage(count_diff, count);
 }
 
-int min_two_images_edgs(Mat image01, Mat image02) {
+int minTwoImagesEdgs(Mat image01, Mat image02) {
 
 	int image01_min_edge = min(image01.cols, image01.rows);
 	int image02_min_edge = min(image02.cols, image02.rows);
