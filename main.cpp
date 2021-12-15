@@ -7,7 +7,8 @@ using namespace std;
 // 重複除去にかかわる関数
 Mat extract_gray_block(Mat image, int size);
 void show_two_images(Mat image01, Mat image02);
-void count_diff(Mat image01_gray, Mat image02_gray, int color, int count);
+int count_diff_pixels(Mat image01_gray, Mat image02_gray, int new_color_threshold);
+bool is_duplicate_image(int count_diff_pixels, int new_count_threshold);
 
 // トラックバーの値に応じて処理をし直すための関数
 void change_n_value(int size, void* userdata);
@@ -21,7 +22,7 @@ int min_two_images_edgs(Mat image01, Mat image02);
 Mat image01 = imread("img/img-01.jpg"); //ファイル読み込み
 Mat image01_gray;
 
-Mat image02 = imread("img/img-09.jpg"); //ファイル読み込み
+Mat image02 = imread("img/img-10.jpg"); //ファイル読み込み
 Mat image02_gray;
 
 int main()
@@ -130,19 +131,14 @@ void show_two_images(Mat image_left, Mat image_right) {
 
 }
 
-void count_diff(Mat image01_gray, Mat image02_gray, int color, int count) {
+int count_diff_pixels(Mat image01_gray, Mat image02_gray, int new_color_threshold) {
 	// グレーブロック特徴の値の違うピクセルをカウント
 	int count_diff = 0;
 
 	// 閾値の設定（省略可能なので、引数の値がマイナスでなければ代入する）
 	static int color_threshold = 2;
-	if (color >= 0) {
-		color_threshold = color;
-	}
-
-	static int count_threshold = 5;
-	if (count >= 0) {
-		count_threshold = count;
+	if (new_color_threshold >= 0) {
+		color_threshold = new_color_threshold;
 	}
 
 	for (int y = 0; y < image01_gray.rows; y++) {
@@ -155,12 +151,29 @@ void count_diff(Mat image01_gray, Mat image02_gray, int color, int count) {
 
 	}
 
-	if (count_diff > count_threshold) {
-		cout << count_diff << "個ピクセルが違うため，重複画像ではありません．" << endl;
+	return count_diff;
+
+}
+
+bool is_duplicate_image(int count_diff_pixels, int new_count_threshold) {
+
+	static int count_threshold = 5;
+	if (new_count_threshold >= 0) {
+		count_threshold = new_count_threshold;
+	}
+
+	bool ans;
+
+	if (count_diff_pixels > count_threshold) {
+		cout << count_diff_pixels << "個ピクセルが違うため，重複画像ではありません．" << endl;
+		ans = false;
 	}
 	else {
-		cout << count_diff << "個ピクセルが違いますが，許容誤差以内なので，重複画像です．" << endl;
+		cout << count_diff_pixels << "個ピクセルが違いますが，許容誤差以内なので，重複画像です．" << endl;
+		ans = true;
 	}
+
+	return ans;
 }
 
 void change_n_value(int size, void* userdata) {
@@ -175,7 +188,8 @@ void change_n_value(int size, void* userdata) {
 		image02_gray = extract_gray_block(image02, 1);
 	}
 
-	count_diff(image01_gray, image02_gray, -1, -1);
+	int count_diff = count_diff_pixels(image01_gray, image02_gray, -1);
+	is_duplicate_image(count_diff, -1);
 
 	show_two_images(image01_gray, image02_gray);
 }
@@ -183,14 +197,15 @@ void change_n_value(int size, void* userdata) {
 void change_color_value(int color, void* userdata) {
 	cout << "現在の色の許容誤差: " << color << endl;
 
-	count_diff(image01_gray, image02_gray, color, -1);
-
+	int count_diff = count_diff_pixels(image01_gray, image02_gray, color);
+	is_duplicate_image(count_diff, -1);
 }
 
 void change_count_value(int count, void* userdata) {
 	cout << "現在のピクセル数の許容誤差: " << count << endl;
 
-	count_diff(image01_gray, image02_gray, -1, count);
+	int count_diff = count_diff_pixels(image01_gray, image02_gray, -1);
+	is_duplicate_image(count_diff, count);
 }
 
 int min_two_images_edgs(Mat image01, Mat image02) {
