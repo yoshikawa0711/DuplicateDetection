@@ -22,7 +22,7 @@ int minTwoImagesEdgs(Mat image01, Mat image02);
 Mat image01 = imread("img/img-01.jpg"); //ファイル読み込み
 Mat image01_gray;
 
-Mat image02 = imread("img/img-10.jpg"); //ファイル読み込み
+Mat image02 = imread("img/img-09.jpg"); //ファイル読み込み
 Mat image02_gray;
 
 int main()
@@ -46,7 +46,6 @@ int main()
 	int division_n = 50;
 	// 画像の縦横の長さのうち、短いほうを n の最大値とする
 	int max_n = minTwoImagesEdgs(image01, image02);
-	
 
 	namedWindow("gray block images", WINDOW_NORMAL);
 	createTrackbar("Divison n", "gray block images", NULL, max_n, changeNValue);
@@ -215,8 +214,10 @@ void changeNValue(int size, void* userdata) {
 		image02_gray = extractGrayBlock(image02, 1);
 	}
 
+	int count = size * size * 0.01;
+
 	int count_diff = countDiffPixels(image01_gray, image02_gray, -1);
-	isDuplicateImage(count_diff, -1);
+	isDuplicateImage(count_diff, count);
 
 	showTwoImages(image01_gray, image02_gray);
 }
