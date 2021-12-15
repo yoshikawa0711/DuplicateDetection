@@ -71,15 +71,17 @@ int main()
 	return 0;
 }
 
+/// <summary>
+///	グレーブロック特徴を抽出するプログラム
+/// </summary>
+/// <param name="image">グレーブロック特徴を抽出したい画像</param>
+/// <param name="size">抽出するグレーブロック特徴の縦・横のピクセル数</param>
+/// <returns>抽出したグレーブロック特徴</returns>
 Mat extractGrayBlock(Mat image, int size) {
 
 	Mat gray;
 	cvtColor(image, gray, COLOR_BGR2GRAY);  //グレースケールに変換
-	
-	// TODO: ファイル名を受け取って複数のグレースケール画像を表示できるようにする
-	// imshow("グレースケール画像", gray);
 
-	// gray block featureを抽出する
 	Mat gray_block = Mat::zeros(size, size, CV_8U);
 	Mat gray_block_sum = Mat::zeros(size, size, CV_32S);
 	Mat gray_block_count = Mat::zeros(size, size, CV_32S);
@@ -87,6 +89,7 @@ Mat extractGrayBlock(Mat image, int size) {
 	double gray_block_rows_length = 1.0 * gray.rows / size;
 	double gray_block_cols_length = 1.0 * gray.cols / size;
 
+	// 該当範囲にあるピクセルの値を足し合わせる
 	for (int y = 0; y < gray.rows; y++) {
 		for (int x = 0; x < gray.cols; x++) {
 			if (y < gray_block_rows_length * size && x < gray_block_cols_length * size) {
@@ -108,6 +111,7 @@ Mat extractGrayBlock(Mat image, int size) {
 
 	}
 
+	// ピクセルの値の平均を求める
 	for (int y = 0; y < size; y++) {
 		for (int x = 0; x < size; x++) {
 			if (gray_block_count.at<int>(y, x) != 0) {
@@ -119,8 +123,14 @@ Mat extractGrayBlock(Mat image, int size) {
 	return gray_block;
 }
 
+/// <summary>
+/// 二つの画像（グレースケールに限る）を並べて表示するための関数
+/// </summary>
+/// <param name="image_left">左側に表示したい画像</param>
+/// <param name="image_right">右側に表示したい画像</param>
 void showTwoImages(Mat image_left, Mat image_right) {
 	Mat base(max(image_left.rows, image_right.rows), image_left.cols + image_right.cols, CV_8U);
+
 	Mat roi_left(base, Rect(0, 0, image_left.cols, image_left.rows));
 	image_left.copyTo(roi_left);
 
@@ -131,11 +141,17 @@ void showTwoImages(Mat image_left, Mat image_right) {
 
 }
 
+/// <summary>
+/// 二つのグレーブロック特徴を比較し、異なるピクセル数を数える関数
+/// </summary>
+/// <param name="image01_gray">一つ目のグレーブロック特徴</param>
+/// <param name="image02_gray">二つ目のグレーブロック特徴</param>
+/// <param name="new_color_threshold">新しく設定したい色の閾値（なければ負の値を入れる）</param>
+/// <returns>異なるピクセル数を出力する</returns>
 int countDiffPixels(Mat image01_gray, Mat image02_gray, int new_color_threshold) {
-	// グレーブロック特徴の値の違うピクセルをカウント
 	int count_diff = 0;
 
-	// 閾値の設定（省略可能なので、引数の値がマイナスでなければ代入する）
+	// 閾値の設定（省略可能にするため、引数の値がマイナスでなければ代入する）
 	static int color_threshold = 2;
 	if (new_color_threshold >= 0) {
 		color_threshold = new_color_threshold;
@@ -155,6 +171,12 @@ int countDiffPixels(Mat image01_gray, Mat image02_gray, int new_color_threshold)
 
 }
 
+/// <summary>
+/// 画像が重複画像かどうかを判断する関数
+/// </summary>
+/// <param name="count_diff_pixels">異なるピクセル数</param>
+/// <param name="new_count_threshold">新しく設定したい異なるピクセル数の許容誤差（なければ負の値を入れる）</param>
+/// <returns>重複画像であればtrue, 重複画像でなければfalse</returns>
 bool isDuplicateImage(int count_diff_pixels, int new_count_threshold) {
 
 	static int count_threshold = 5;
@@ -176,6 +198,11 @@ bool isDuplicateImage(int count_diff_pixels, int new_count_threshold) {
 	return ans;
 }
 
+/// <summary>
+/// グレーブロック特徴の分割数nの値を変化させたときにコールバックする関数
+/// </summary>
+/// <param name="size">新しく設定されるnの値</param>
+/// <param name="userdata">ユーザデータ</param>
 void changeNValue(int size, void* userdata) {
 	cout << "現在のn: " << size << endl;
 
@@ -194,6 +221,11 @@ void changeNValue(int size, void* userdata) {
 	showTwoImages(image01_gray, image02_gray);
 }
 
+/// <summary>
+/// 色の許容誤差を変更させたときにコールバックする関数
+/// </summary>
+/// <param name="color">新しい色の許容誤差の値</param>
+/// <param name="userdata">ユーザデータ</param>
 void changeColorValue(int color, void* userdata) {
 	cout << "現在の色の許容誤差: " << color << endl;
 
@@ -201,6 +233,11 @@ void changeColorValue(int color, void* userdata) {
 	isDuplicateImage(count_diff, -1);
 }
 
+/// <summary>
+/// 異なるピクセル数の許容誤差を変化させたときにコールバックする関数
+/// </summary>
+/// <param name="count">異なるピクセル数の許容誤差</param>
+/// <param name="userdata">ユーザデータ</param>
 void changeCountValue(int count, void* userdata) {
 	cout << "現在のピクセル数の許容誤差: " << count << endl;
 
@@ -209,6 +246,12 @@ void changeCountValue(int count, void* userdata) {
 	isDuplicateImage(count_diff, count);
 }
 
+/// <summary>
+/// 二つの画像から最も小さい辺の長さを求める関数
+/// </summary>
+/// <param name="image01">一つ目の画像</param>
+/// <param name="image02">二つ目の画像</param>
+/// <returns></returns>
 int minTwoImagesEdgs(Mat image01, Mat image02) {
 
 	int image01_min_edge = min(image01.cols, image01.rows);
