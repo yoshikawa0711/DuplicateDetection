@@ -10,6 +10,9 @@ void showTwoImages(Mat image01, Mat image02);
 int countDiffPixels(Mat image01_gray, Mat image02_gray, int new_color_threshold);
 bool isDuplicateImage(int count_diff_pixels, int new_count_threshold);
 
+// 編集履歴の分析に必要な関数
+void analyseEditingHistory(Mat image01, Mat image02);
+
 // トラックバーの値に応じて処理をし直すための関数
 void changeNValue(int size, void* userdata);
 void changeColorValue(int color, void* userdata);
@@ -22,7 +25,7 @@ int minTwoImagesEdgs(Mat image01, Mat image02);
 Mat image01 = imread("img/img-01.jpg"); //ファイル読み込み
 Mat image01_gray;
 
-Mat image02 = imread("img/img-09.jpg"); //ファイル読み込み
+Mat image02 = imread("img/img-06.jpg"); //ファイル読み込み
 Mat image02_gray;
 
 int main()
@@ -198,6 +201,26 @@ bool isDuplicateImage(int count_diff_pixels, int new_count_threshold) {
 }
 
 /// <summary>
+/// 編集履歴を分析する関数
+/// </summary>
+/// <param name="image01">一つ目の画像</param>
+/// <param name="image02">二つ目の画像</param>
+void analyseEditingHistory(Mat image01, Mat image02) {
+	// ファイルの拡張子を調べる
+	
+	// ファイルの縦横の長さを調べる
+	double vertical_rate = 1.0 * image01.cols / image02.cols;
+	double horizontal_rate = 1.0 * image01.rows / image02.rows;
+	cout << "画像01は、画像2の高さ" << vertical_rate << "倍、";
+	cout << "横" << horizontal_rate << "倍です．" << endl;
+
+	// ファイルの色変換を調べる
+	
+	// cout << "画像01と画像02の間に行われた編集は" << "○○" << "です．" << endl;
+
+}
+
+/// <summary>
 /// グレーブロック特徴の分割数nの値を変化させたときにコールバックする関数
 /// </summary>
 /// <param name="size">新しく設定されるnの値</param>
@@ -215,9 +238,11 @@ void changeNValue(int size, void* userdata) {
 	}
 
 	int count = size * size * 0.01;
-
 	int count_diff = countDiffPixels(image01_gray, image02_gray, -1);
-	isDuplicateImage(count_diff, count);
+
+	if (isDuplicateImage(count_diff, count)) {
+		analyseEditingHistory(image01, image02);
+	}
 
 	showTwoImages(image01_gray, image02_gray);
 }
@@ -231,7 +256,10 @@ void changeColorValue(int color, void* userdata) {
 	cout << "現在の色の許容誤差: " << color << endl;
 
 	int count_diff = countDiffPixels(image01_gray, image02_gray, color);
-	isDuplicateImage(count_diff, -1);
+	
+	if (isDuplicateImage(count_diff, -1)) {
+		analyseEditingHistory(image01, image02);
+	}
 }
 
 /// <summary>
@@ -244,7 +272,10 @@ void changeCountValue(int count, void* userdata) {
 
 	// TODO: count_diffを計算しなくても良いような実装にする
 	int count_diff = countDiffPixels(image01_gray, image02_gray, -1);
-	isDuplicateImage(count_diff, count);
+
+	if (isDuplicateImage(count_diff, count)) {
+		analyseEditingHistory(image01, image02);
+	}
 }
 
 /// <summary>
