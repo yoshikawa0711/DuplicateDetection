@@ -25,7 +25,7 @@ int minTwoImagesEdgs(Mat image01, Mat image02);
 Mat image01 = imread("img/img-01.jpg"); //ファイル読み込み
 Mat image01_gray;
 
-Mat image02 = imread("img/img-06.jpg"); //ファイル読み込み
+Mat image02 = imread("img/img-10.jpg"); //ファイル読み込み
 Mat image02_gray;
 
 int main()
@@ -211,10 +211,22 @@ void analyseEditingHistory(Mat image01, Mat image02) {
 	// ファイルの縦横の長さを調べる
 	double vertical_rate = 1.0 * image01.cols / image02.cols;
 	double horizontal_rate = 1.0 * image01.rows / image02.rows;
-	cout << "画像01は、画像2の高さ" << vertical_rate << "倍、";
-	cout << "横" << horizontal_rate << "倍です．" << endl;
+	cout << "画像01は、画像2の幅" << vertical_rate << "倍、";
+	cout << "高さ" << horizontal_rate << "倍です．" << endl;
 
 	// ファイルの色変換を調べる
+	// RGBからHSVに変換する
+	Mat image01_hsv;
+	cvtColor(image01, image01_hsv, COLOR_BGR2HSV);
+	Mat image02_hsv;
+	cvtColor(image02, image02_hsv, COLOR_BGR2HSV);
+
+	// セルを対応させるために画像サイズを小さいほうに合わせる
+	resize(image02_hsv, image02_hsv, Size(), horizontal_rate, vertical_rate);
+
+	// TODO: ウィンドウ名を指定して複数表示できるように
+	// TODO; 型を受け取った画像に合わせる
+	// showTwoImages(image01_hsv, image02_hsv);
 	
 	// cout << "画像01と画像02の間に行われた編集は" << "○○" << "です．" << endl;
 
