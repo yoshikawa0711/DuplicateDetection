@@ -227,6 +227,39 @@ void analyseEditingHistory(Mat image01, Mat image02) {
 	// TODO: ウィンドウ名を指定して複数表示できるように
 	// TODO; 型を受け取った画像に合わせる
 	// showTwoImages(image01_hsv, image02_hsv);
+
+		// 色相の変化を調べる
+	int degree_h = 0;
+
+	for (int y = 0; y < image01_hsv.rows; y++) {
+		for (int x = 0; x < image01_hsv.cols; x++) {
+			if (+image01_hsv.at<Vec3b>(y, x)[1] != 0) {
+				if (+image01_hsv.at<Vec3b>(y, x)[0] != +image02_hsv.at<Vec3b>(y, x)[0]) {
+					degree_h = +image01_hsv.at<Vec3b>(y, x)[0] - +image02_hsv.at<Vec3b>(y, x)[0];
+					// cout << "画像01の色相" << +image01_hsv.at<Vec3b>(y, x)[0] << ", 画像02の色相" << +image02_hsv.at<Vec3b>(y, x)[0] << "です．" << endl;
+				}
+			}
+		}
+	}
+
+	cout << "画像01と画像02の間に行われた色相の変換は" << degree_h << "です．" << endl;
+
+	// 彩度の変化を調べる
+
+	int degree_s = 0;
+
+	for (int y = 0; y < image01_hsv.rows; y++) {
+		for (int x = 0; x < image01_hsv.cols; x++) {
+			if (+image01_hsv.at<Vec3b>(y, x)[1] != 0) {
+				if (+image01_hsv.at<Vec3b>(y, x)[2] != 0 || +image01_hsv.at<Vec3b>(y, x)[2] != 255) {
+					degree_s = +image01_hsv.at<Vec3b>(y, x)[1] - +image02_hsv.at<Vec3b>(y, x)[1];
+					cout << "画像01の彩度" << +image01_hsv.at<Vec3b>(y, x)[1] << ", 画像02の彩度" << +image02_hsv.at<Vec3b>(y, x)[1] << "です．" << endl;
+				}
+			}
+		}
+	}
+
+	cout << "画像01と画像02の間に行われた彩度の変換は" << degree_s << "です．" << endl;
 	
 	// cout << "画像01と画像02の間に行われた編集は" << "○○" << "です．" << endl;
 
