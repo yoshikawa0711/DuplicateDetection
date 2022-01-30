@@ -5,6 +5,7 @@ using namespace std;
 
 // プロトタイプ宣言
 // 重複除去にかかわる関数
+int duplicateDetection(string name01, string name02);
 Mat extractGrayBlock(Mat image, int size);
 void showTwoImages(Mat image01, Mat image02);
 int countDiffPixels(Mat image01_gray, Mat image02_gray, int new_color_threshold);
@@ -22,46 +23,37 @@ void changeCountValue(int count, void* userdata);
 int minTwoImagesEdgs(Mat image01, Mat image02);
 
 // グローバル変数
-Mat image01 = imread("img/img-01.jpg"); //ファイル読み込み
+Mat image01;
 Mat image01_gray;
 
-Mat image02 = imread("img/img-10.jpg"); //ファイル読み込み
+Mat image02;
 Mat image02_gray;
 
 int main()
 {
 	clock_t start = clock();
 
-	if (image01.empty()) {  //Matオブジェクトが空のとき
-		cout << "ファイルが読み込めません";
-		cin.get();
-		return -1;
+	vector<string> file_names_vec = { "img/img-01.jpg", "img/img-02.png", "img/img-03.jpg", "img/img-04.jpg", "img/img-05.jpg", "img/img-06.jpg", "img/img-07.jpg", "img/img-08.jpg", "img/img-09.jpg", "img/img-10.jpg",
+								  "img/img-11.png", "img/img-12.png", "img/img-13.png", "img/img-14.png", "img/img-15.jpg", "img/img-16.png", "img/img-17.png", "img/img-18.png", "img/img-19.png", "img/img-20.png",
+								  "img/img-21.png", "img/img-22.png" };
+
+	int count = 0;
+	
+	for (int i = 0; i < file_names_vec.size(); i++) {
+		for (int j = 0; j < file_names_vec.size(); j++) {
+			if (j > i) {
+				//int result = duplicateDetection(file_names_vec[i], file_names_vec[j]);
+				//if (result < 0) {
+				//	cout << "Error: image not found" << endl;
+				//}
+
+				count++;
+				
+			}
+		}
 	}
-	imshow("カラー画像1", image01);
-	
-	if (image02.empty()) {  //Matオブジェクトが空のとき
-		cout << "ファイルが読み込めません";
-		cin.get();
-		return -1;
-	}
-	imshow("カラー画像2", image02);
 
-	int division_n = 50;
-	// 画像の縦横の長さのうち、短いほうを n の最大値とする
-	int max_n = minTwoImagesEdgs(image01, image02);
-
-	namedWindow("gray block images", WINDOW_NORMAL);
-	createTrackbar("Divison n", "gray block images", NULL, max_n, changeNValue);
-	setTrackbarPos("Divison n", "gray block images", division_n);
-	
-	int color = 16;
-	createTrackbar("Allowable Error color", "gray block images", NULL, 255, changeColorValue);
-	setTrackbarPos("Allowable Error color", "gray block images", color);
-	
-	int count = division_n * division_n * 0.01;
-	createTrackbar("Allowable Error count", "gray block images", NULL, division_n * division_n, changeCountValue);
-	setTrackbarPos("Allowable Error count", "gray block images", count);
-
+	cout << "count: " << count << endl;
 
 	// 実行にかかった時間を算出
 	clock_t end = clock();
@@ -70,6 +62,52 @@ int main()
 
 	waitKey();
 	destroyAllWindows();
+	return 0;
+}
+
+int duplicateDetection(string name01, string name02) {
+	image01 = imread(name01); //ファイル読み込み
+	image02 = imread(name02); //ファイル読み込み
+
+	if (image01.empty()) {  //Matオブジェクトが空のとき
+		cout << name01 << "ファイルが読み込めません";
+		cin.get();
+		return -1;
+	}
+	//imshow("カラー画像1", image01);
+
+	if (image02.empty()) {  //Matオブジェクトが空のとき
+		cout << name02 << "ファイルが読み込めません";
+		cin.get();
+		return -1;
+	}
+	//imshow("カラー画像2", image02);
+
+	int division_n = 50;
+	
+	// 画像の縦横の長さのうち、短いほうを n の最大値とする
+	//int max_n = minTwoImagesEdgs(image01, image02);
+
+	//namedWindow("gray block images", WINDOW_NORMAL);
+	//createTrackbar("Divison n", "gray block images", NULL, max_n, changeNValue);
+	//setTrackbarPos("Divison n", "gray block images", division_n);
+
+	int color = 8;
+	//createTrackbar("Allowable Error color", "gray block images", NULL, 255, changeColorValue);
+	//setTrackbarPos("Allowable Error color", "gray block images", color);
+
+	int count = division_n * division_n * 0.01;
+	//createTrackbar("Allowable Error count", "gray block images", NULL, division_n * division_n, changeCountValue);
+	//setTrackbarPos("Allowable Error count", "gray block images", count);
+
+	image01_gray = extractGrayBlock(image01, division_n);
+	image02_gray = extractGrayBlock(image02, division_n);
+
+	int count_diff = countDiffPixels(image01_gray, image02_gray, color);
+	if (isDuplicateImage(count_diff, count)) {
+		cout << name01 << ", " << name02 << endl;
+	}
+
 	return 0;
 }
 
@@ -189,11 +227,11 @@ bool isDuplicateImage(int count_diff_pixels, int new_count_threshold) {
 	bool ans;
 
 	if (count_diff_pixels > count_threshold) {
-		cout << count_diff_pixels << "個ピクセルが違うため，重複画像ではありません．" << endl;
+		// cout << count_diff_pixels << "個ピクセルが違うため，重複画像ではありません．" << endl;
 		ans = false;
 	}
 	else {
-		cout << count_diff_pixels << "個ピクセルが違いますが，許容誤差以内なので，重複画像です．" << endl;
+		// cout << count_diff_pixels << "個ピクセルが違いますが，許容誤差以内なので，重複画像です．" << endl;
 		ans = true;
 	}
 
