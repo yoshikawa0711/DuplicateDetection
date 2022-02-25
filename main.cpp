@@ -1,12 +1,14 @@
 ﻿#include <opencv2/opencv.hpp>
 #include <time.h>
+
+#include "Image.h"
+
 using namespace cv;
 using namespace std;
 
 // プロトタイプ宣言
 // 重複除去にかかわる関数
 int duplicateDetection(string name01, string name02);
-Mat extractGrayBlock(Mat image, int size);
 void showTwoImages(Mat image01, Mat image02);
 int countDiffPixels(Mat image01_gray, Mat image02_gray, int new_color_threshold);
 bool isDuplicateImage(int count_diff_pixels, int new_count_threshold);
@@ -23,11 +25,9 @@ void changeCountValue(int count, void* userdata);
 int minTwoImagesEdgs(Mat image01, Mat image02);
 
 // グローバル変数
-Mat image01;
-Mat image01_gray;
+Image image01;
 
-Mat image02;
-Mat image02_gray;
+Image image02;
 
 int main()
 {
@@ -42,10 +42,10 @@ int main()
 	for (int i = 0; i < file_names_vec.size(); i++) {
 		for (int j = 0; j < file_names_vec.size(); j++) {
 			if (j > i) {
-				//int result = duplicateDetection(file_names_vec[i], file_names_vec[j]);
-				//if (result < 0) {
-				//	cout << "Error: image not found" << endl;
-				//}
+				int result = duplicateDetection(file_names_vec[i], file_names_vec[j]);
+				if (result < 0) {
+					cout << "Error: image not found" << endl;
+				}
 
 				count++;
 				
@@ -66,17 +66,17 @@ int main()
 }
 
 int duplicateDetection(string name01, string name02) {
-	image01 = imread(name01); //ファイル読み込み
-	image02 = imread(name02); //ファイル読み込み
+	image01 = Image::Image(name01, imread(name01)); //ファイル読み込み
+	image02 = Image::Image(name02, imread(name02)); //ファイル読み込み
 
-	if (image01.empty()) {  //Matオブジェクトが空のとき
+	if (image01.isEmpty()) {  //Image オブジェクトが空のとき
 		cout << name01 << "ファイルが読み込めません";
 		cin.get();
 		return -1;
 	}
 	//imshow("カラー画像1", image01);
 
-	if (image02.empty()) {  //Matオブジェクトが空のとき
+	if (image02.isEmpty()) {  //Image オブジェクトが空のとき
 		cout << name02 << "ファイルが読み込めません";
 		cin.get();
 		return -1;
@@ -100,67 +100,15 @@ int duplicateDetection(string name01, string name02) {
 	//createTrackbar("Allowable Error count", "gray block images", NULL, division_n * division_n, changeCountValue);
 	//setTrackbarPos("Allowable Error count", "gray block images", count);
 
-	image01_gray = extractGrayBlock(image01, division_n);
-	image02_gray = extractGrayBlock(image02, division_n);
+	image01.generateGrayBlock(division_n);
+	image02.generateGrayBlock(division_n);
 
-	int count_diff = countDiffPixels(image01_gray, image02_gray, color);
+	int count_diff = countDiffPixels(image01.getGrayBlock(), image01.getGrayBlock(), color);
 	if (isDuplicateImage(count_diff, count)) {
 		cout << name01 << ", " << name02 << endl;
 	}
 
 	return 0;
-}
-
-/// <summary>
-///	グレーブロック特徴を抽出するプログラム
-/// </summary>
-/// <param name="image">グレーブロック特徴を抽出したい画像</param>
-/// <param name="size">抽出するグレーブロック特徴の縦・横のピクセル数</param>
-/// <returns>抽出したグレーブロック特徴</returns>
-Mat extractGrayBlock(Mat image, int size) {
-
-	Mat gray;
-	cvtColor(image, gray, COLOR_BGR2GRAY);  //グレースケールに変換
-
-	Mat gray_block = Mat::zeros(size, size, CV_8U);
-	Mat gray_block_sum = Mat::zeros(size, size, CV_32S);
-	Mat gray_block_count = Mat::zeros(size, size, CV_32S);
-
-	double gray_block_rows_length = 1.0 * gray.rows / size;
-	double gray_block_cols_length = 1.0 * gray.cols / size;
-
-	// 該当範囲にあるピクセルの値を足し合わせる
-	for (int y = 0; y < gray.rows; y++) {
-		for (int x = 0; x < gray.cols; x++) {
-			if (y < gray_block_rows_length * size && x < gray_block_cols_length * size) {
-				if ((int)round(y / gray_block_rows_length) < size && (int)round(x / gray_block_cols_length) < size) {
-					gray_block_sum.at<int>((int)round(y / gray_block_rows_length), (int)round(x / gray_block_cols_length)) += +gray.at<unsigned char>(y, x);
-					gray_block_count.at<int>((int)round(y / gray_block_rows_length), (int)round(x / gray_block_cols_length)) += 1;
-				} 
-				else if ((int)round(y / gray_block_rows_length) < size) {
-					gray_block_sum.at<int>((int)round(y / gray_block_rows_length), size - 1) += +gray.at<unsigned char>(y, x);
-					gray_block_count.at<int>((int)round(y / gray_block_rows_length), size - 1) += 1;
-				}
-				else if ((int)round(x / gray_block_cols_length) < size) {
-					gray_block_sum.at<int>(size - 1, (int)round(x / gray_block_cols_length)) += +gray.at<unsigned char>(y, x);
-					gray_block_count.at<int>(size - 1, (int)round(x / gray_block_cols_length)) += 1;
-				}
-
-			}
-		}
-
-	}
-
-	// ピクセルの値の平均を求める
-	for (int y = 0; y < size; y++) {
-		for (int x = 0; x < size; x++) {
-			if (gray_block_count.at<int>(y, x) != 0) {
-				gray_block.at<unsigned char>(y, x) = gray_block_sum.at<int>(y, x) / gray_block_count.at<int>(y, x);
-			}
-		}
-	}
-
-	return gray_block;
 }
 
 /// <summary>
@@ -279,22 +227,18 @@ void changeNValue(int size, void* userdata) {
 	cout << "現在のn: " << size << endl;
 
 	if (size > 0) {
-		image01_gray = extractGrayBlock(image01, size);
-		image02_gray = extractGrayBlock(image02, size);
-	}
-	else {
-		image01_gray = extractGrayBlock(image01, 1);
-		image02_gray = extractGrayBlock(image02, 1);
+		image01.generateGrayBlock(size);
+		image02.generateGrayBlock(size);
 	}
 
 	int count = size * size * 0.01;
-	int count_diff = countDiffPixels(image01_gray, image02_gray, -1);
+	int count_diff = countDiffPixels(image01.getGrayBlock(), image02.getGrayBlock(), -1);
 
 	if (isDuplicateImage(count_diff, count)) {
-		analyseEditingHistory(image01, image02);
+		analyseEditingHistory(image01.getImage(), image02.getImage());
 	}
 
-	showTwoImages(image01_gray, image02_gray);
+	showTwoImages(image01.getGrayBlock(), image01.getGrayBlock());
 }
 
 /// <summary>
@@ -305,10 +249,10 @@ void changeNValue(int size, void* userdata) {
 void changeColorValue(int color, void* userdata) {
 	cout << "現在の色の許容誤差: " << color << endl;
 
-	int count_diff = countDiffPixels(image01_gray, image02_gray, color);
+	int count_diff = countDiffPixels(image01.getGrayBlock(), image02.getGrayBlock(), color);
 	
 	if (isDuplicateImage(count_diff, -1)) {
-		analyseEditingHistory(image01, image02);
+		analyseEditingHistory(image01.getImage(), image02.getImage());
 	}
 }
 
@@ -321,10 +265,10 @@ void changeCountValue(int count, void* userdata) {
 	cout << "現在のピクセル数の許容誤差: " << count << endl;
 
 	// TODO: count_diffを計算しなくても良いような実装にする
-	int count_diff = countDiffPixels(image01_gray, image02_gray, -1);
+	int count_diff = countDiffPixels(image01.getGrayBlock(), image02.getGrayBlock(), -1);
 
 	if (isDuplicateImage(count_diff, count)) {
-		analyseEditingHistory(image01, image02);
+		analyseEditingHistory(image01.getImage(), image02.getImage());
 	}
 }
 
