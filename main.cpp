@@ -26,11 +26,19 @@ int minTwoImagesEdgs(Mat image01, Mat image02);
 
 // グローバル変数
 Image image01;
-
 Image image02;
 
-int main()
+int main(int argc, char *argv[])
 {
+
+	if (argc != 2) {
+		cout << "USAGE: ./DuplicateDetection 1 or 2" << endl;
+		cout << "1: Duplicate Image Decision Mode" << endl;
+		cout << "2: Gray Block Image Comparison Mode" << endl;
+
+		return 1;
+	}
+
 	clock_t start = clock();
 
 	vector<string> file_names_vec = { "img/img-01.jpg", "img/img-02.png", "img/img-03.jpg", "img/img-04.jpg", "img/img-05.jpg", "img/img-06.jpg", "img/img-07.jpg", "img/img-08.jpg", "img/img-09.jpg", "img/img-10.jpg",
@@ -66,8 +74,8 @@ int main()
 }
 
 int duplicateDetection(string name01, string name02) {
-	image01 = Image::Image(name01, imread(name01)); //ファイル読み込み
-	image02 = Image::Image(name02, imread(name02)); //ファイル読み込み
+	image01 = Image(name01, imread(name01)); //ファイル読み込み
+	image02 = Image(name02, imread(name02)); //ファイル読み込み
 
 	if (image01.isEmpty()) {  //Image オブジェクトが空のとき
 		cout << name01 << "ファイルが読み込めません";
