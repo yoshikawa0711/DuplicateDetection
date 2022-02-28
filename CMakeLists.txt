@@ -2,7 +2,13 @@ cmake_minimum_required(VERSION 2.8)
 
 # ソリューションファイルの名前を指定する
 project(DuplicateDetection )
-add_executable(DuplicateDetection main.cpp)
+
+set(duplicate_detection_src
+  main.cpp
+  Image.cpp
+)
+
+add_executable(DuplicateDetection ${duplicate_detection_src})
 
 #unicodeの設定
 add_definitions(-D_UNICODE)
